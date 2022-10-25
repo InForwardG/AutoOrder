@@ -1,2 +1,2 @@
 # AutoOrder
-Scripts for automatically making orders on mainstream shopping platform
+Scripts for automatically making orders on JD
