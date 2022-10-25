@@ -1,3 +1,5 @@
+import os
+
 import cv2
 import time
 import random
@@ -9,6 +11,7 @@ from selenium.webdriver.common.action_chains import ActionChains
 
 
 class MainProcess:
+    driver_type = ""
     driver_path = ""
     website = ""
     username = ""
@@ -16,6 +19,7 @@ class MainProcess:
     driver = webdriver
 
     def __init__(self, configuration):
+        self.driver_type = configuration["WebBrowser"]
         self.driver_path = configuration["WebDriver"]
         self.website = configuration["JD_website"]
         self.username = configuration["username"]
@@ -80,16 +84,16 @@ class MainProcess:
     def login(self):
         self.driver.get('https://passport.jd.com/new/login.aspx')  # 京东登录界面链接
 
-        self.driver.implicitly_wait(2)  # 隐式等待 2 秒
+        self.driver.implicitly_wait(1)  # 隐式等待 1 秒
         self.driver.find_element_by_link_text("账户登录").click()  # 找到账户登录并点击
 
-        self.driver.implicitly_wait(2)  # 隐式等待 2 秒
+        self.driver.implicitly_wait(1)  # 隐式等待 1 秒
         self.driver.find_element_by_id("loginname").send_keys(self.username)  # 找到用户名输入框并输入用户名
 
-        self.driver.implicitly_wait(2)  # 隐式等待 2 秒
+        self.driver.implicitly_wait(1)  # 隐式等待 1 秒
         self.driver.find_element_by_id("nloginpwd").send_keys(self.password)  # 找到密码输入框输入密码
 
-        self.driver.implicitly_wait(2)  # 隐式等待 2 秒
+        self.driver.implicitly_wait(1)  # 隐式等待 1 秒
         self.driver.find_element_by_id("loginsubmit").click()  # 找到登录并点击
 
         while True:
@@ -102,7 +106,7 @@ class MainProcess:
 
     # 定时购买东西
     def buy(self, buy_time):
-        self.driver.implicitly_wait(2)  # 隐式等待 2 秒
+        self.driver.implicitly_wait(1)  # 隐式等待 1 秒
         self.driver.find_element_by_link_text("我的购物车").click()  # 找到我的购物车并点击
 
         total_windows = self.driver.window_handles  # 所有打开的窗口
@@ -110,19 +114,38 @@ class MainProcess:
 
         while True:
             current_time = datetime.datetime.now()  # 获取当前日期时间
+            target_time = datetime.datetime.strptime('2022-10-31 20:00:00', '%Y-%m-%d %H:%M:%S')
+
+            time_diff = target_time - current_time
+            print("距离抢购时间还有: %d天%d秒" % (time_diff.days, time_diff.seconds))
+
+            if time_diff.days > 0:
+                print("休眠 1 天")
+                time.sleep(3600 * 24)
+                continue
+            elif time_diff.seconds > 60:
+                print("休眠 10 秒")
+                time.sleep(10)
+                continue
+
             if current_time.strftime('%Y-%m-%d %H:%M:%S') == buy_time:  # 如果当前时间等于指定购买时间
-                self.driver.implicitly_wait(2)  # 隐式等待 2 秒
+                self.driver.implicitly_wait(1)  # 隐式等待 1 秒
                 self.driver.find_element_by_name('select-all').click()  # 购物车全选
-                time.sleep(0.5)  # 等待 0.5 秒
+                time.sleep(0.1)  # 等待 0.1 秒
                 self.driver.find_element_by_link_text("去结算").click()  # 找到去结算并点击
-                self.driver.implicitly_wait(2)  # 隐式等待 2 秒
+                self.driver.implicitly_wait(1)  # 隐式等待 1 秒
                 self.driver.find_element_by_id("order-submit").click()  # 找到提交订单并点击
-                self.driver.implicitly_wait(2)  # 隐式等待 2 秒
+                self.driver.implicitly_wait(1)  # 隐式等待 1 秒
                 print('current time : ' + current_time.strftime('%Y-%m-%d %H:%M:%S'))  # 打印当前时间
                 print('购买成功 !')  # 购买成功
 
     def run(self):
-        self.driver = webdriver.Edge(executable_path=self.driver_path)  # 打开浏览器
+        # 打开浏览器
+        if self.driver_type == "Edge":
+            self.driver = webdriver.Edge(executable_path=self.driver_path)
+        elif self.driver_type == "Chrome":
+            self.driver = webdriver.Chrome(executable_path=self.driver_path)
+
         self.driver.maximize_window()  # 最大化 Edge 浏览器窗口
         self.login()  # 登录京东
-        self.buy('2021-08-14 12:00:00')  # 定时购买
+        self.buy('2022-10-31 20:00:00')  # 定时购买
