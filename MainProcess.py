@@ -27,25 +27,31 @@ class MainProcess:
 
     # 移动滑动验证码中的滑块
     def check_move(self, button_slide, distance):
-        dist_finished = 0  # 已经移动的距离
-        dist_remaining = distance  # 剩余的距离
-        dist_move = 5  # 每次移动的距离
+        distance *= 0.8  # 移动距离修正
+        dist_extra = 5  # 移动额外的距离模拟人手划过头
+        dist_remaining = distance + dist_extra  # 剩余的距离
+        speed = 5  # 每次移动的距离
+        speed_add = 2  # 加速度
+        speed_max = 15
 
         element = self.driver.find_element_by_xpath(button_slide)  # 选取滑动验证码滑块
         ActionChains(self.driver).click_and_hold(element).perform()  # 模拟鼠标在滑块上点击并保持
 
         # 模拟不断加速移动滑块
         while dist_remaining > 0:
-            dist_move += 1  # 不断 加速移动滑块
-            max_dist = 10
-            if dist_move > max_dist:
-                dist_move = max_dist
+            speed += speed_add  # 不断 加速移动滑块
+            if speed > speed_max:
+                speed = speed_max
             # 每次移动滑块都带有正负偏差来模拟手动移动时的滑动不稳定
-            ActionChains(self.driver).move_by_offset(dist_move, random.randint(-3, 3)).perform()  # 模拟鼠标水平向右拖动滑块
-            dist_remaining -= dist_move  # 剩余距离减去已移动的距离
-            dist_finished += dist_move  # 已完成距离加上已移动的距离
+            ActionChains(self.driver).move_by_offset(speed, random.randint(-3, 3)).perform()  # 模拟鼠标水平向右拖动滑块
+            dist_remaining -= speed  # 剩余距离减去已移动的距离
 
-        ActionChains(self.driver).move_by_offset(dist_remaining, random.randint(-3, 3)).perform()  # 模拟鼠标水平回移拖动滑块修正
+        time.sleep(0.5)  # 停顿0.5s
+        dist_remaining -= dist_extra
+        speed = -2
+        while dist_remaining < 0:
+            ActionChains(self.driver).move_by_offset(speed, random.randint(-3, 3)).perform()  # 模拟鼠标水平回移拖动滑块修正
+            dist_remaining -= speed
         ActionChains(self.driver).release(on_element=element).perform()  # 模拟松开鼠标
 
     # 获取滑动验证码构成的两张图片并计算应移动的距离
@@ -78,22 +84,22 @@ class MainProcess:
     def slide_identify(self):
         slide_button, distance = self.get_check_image()  # 获取滑块和滑块需要移动的距离
         print(f'本次滑块需要移动的距离为： {distance}')  # 打印滑块需要移动的距离
-        self.check_move(slide_button, distance / 1.3)  # 移动滑块，1.3 是一个实验修正值
+        self.check_move(slide_button, distance)  # 移动滑块，1.3 是一个实验修正值
 
-    # 登录京东网页版
+    # 登录京东网页
     def login(self):
         self.driver.get('https://passport.jd.com/new/login.aspx')  # 京东登录界面链接
 
-        self.driver.implicitly_wait(1)  # 隐式等待 1 秒
+        self.driver.implicitly_wait(3)  # 隐式等待 3 秒
         self.driver.find_element_by_link_text("账户登录").click()  # 找到账户登录并点击
 
-        self.driver.implicitly_wait(1)  # 隐式等待 1 秒
+        self.driver.implicitly_wait(3)  # 隐式等待 3 秒
         self.driver.find_element_by_id("loginname").send_keys(self.username)  # 找到用户名输入框并输入用户名
 
-        self.driver.implicitly_wait(1)  # 隐式等待 1 秒
+        self.driver.implicitly_wait(3)  # 隐式等待 3 秒
         self.driver.find_element_by_id("nloginpwd").send_keys(self.password)  # 找到密码输入框输入密码
 
-        self.driver.implicitly_wait(1)  # 隐式等待 1 秒
+        self.driver.implicitly_wait(3)  # 隐式等待 3 秒
         self.driver.find_element_by_id("loginsubmit").click()  # 找到登录并点击
 
         while True:
